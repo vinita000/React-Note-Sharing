@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { notesRef, database } from '../utils/firebase';
-import { push, set } from 'firebase/database';
+import { db } from '../utils/firestore';
+// import { notesRef, database } from '../utils/firebase';
+// import { push, set } from 'firebase/database';
 import { update, ref } from 'firebase/database';
 
 import {
@@ -13,17 +14,25 @@ import {
   TextField,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import { addDoc, collection, doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
 
 const defaultValues: ISTATE = {
   isModalOpen: false,
   notes: [],
-  title: "",
-  description: "",
+  // title: "",
+  // description: "",
   error: '',
-  loading: true
+  loading: false,
+  login: true,
+  name: '',
+  email: '',
+  password: '',
+  errorMessage: ''
 };
 
 const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onRequestClose, isCreate, updateTitle, updateDescription, updateId  }) => {
+  console.log("isOpen", isOpen)
+  console.log("onRequestClose", onRequestClose)
   const [state, setState] = useState(defaultValues);
   const { title, description } = state;
 
@@ -33,57 +42,60 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onRequestClose, isCreate,
       ...prevState,
       title: updateTitle || '',
       description: updateDescription || '',
+      loading: false
     }));
   }, [updateTitle, updateDescription]);
 
-  const addNote = () => {
-    const newNoteRef = push(notesRef);
+  const addNote = async (e: React.FormEvent) => {
+    // e.preventDefault();
     const newNote = {
       title: title,
       description: description,
     };
-    set(newNoteRef, newNote)
-    .then(() => {
+  
+    try {
+      await addDoc(collection(db, 'notes'), {
+        note: newNote,
+        createdAt: serverTimestamp(),
+      });
+  
       setState((prevState) => ({
         ...prevState,
         title: '',
         description: '',
       }));
       onRequestClose();
-    })
-    .catch((error: string) => {
+    } catch (error: any) {
       console.error('Error adding note: ', error);
       setState((prevState) => ({
         ...prevState,
-        error: error,
+        error: error.message,
       }));
-    });
+    }
   }
+  
 
-  const upDateNote = (id: string) => {
-    const noteRef = ref(database, `notes/${id}`)
-    // const noteRef = ref(notesRef, id);
-    console.log("noteRef", noteRef)
-    const updatedNoteData = {
-      title: title,
-      description: description,
+  const upDateNote = async (id: string, title: string, description: string) => {
+    console.log("title..........", title);
+    console.log("descr..........", description);
+    const noteRef = doc(db, 'notes', id);
+
+    const updatedNote = {
+      note: {
+        title: title,
+        description: description
+      }
     };
 
-
-    console.log("updatedNoteData", updatedNoteData)
-    update(noteRef, updatedNoteData)
-      .then(() => {
-        console.log('Note updated successfully');
-        setState((prevState) => ({
-          ...prevState,
-        }));
-        onRequestClose();
-      })
-      .catch((error: string) => {
-        console.error('Error updating note: ', error);
-        // Handle the error here, e.g., display an error message
-      });
-  }
+    try {
+      await setDoc(noteRef, updatedNote, { merge: true });
+      console.log('Document updated successfully.');
+      onRequestClose();
+    } catch (error) {
+      console.error('Error updating document:', error);
+    }
+  };
+  
 
   const handleText = (e: React.ChangeEvent<HTMLInputElement>) => {
     setState((prevState) => ({
@@ -153,7 +165,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onRequestClose, isCreate,
         <Button
           variant="contained"
           sx={{ mt: 2 }}
-          onClick={isCreate ? addNote : () => upDateNote(updateId)}
+          onClick={isCreate ? addNote : () => upDateNote(updateId, title, description)}
           >
           { isCreate ? 'Create Note' : 'Update Note' }
         </Button>

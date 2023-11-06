@@ -5,6 +5,11 @@ interface ISTATE {
   description: string,
   error: string,
   loading: boolean
+  login: boolean,
+  name: string,
+  email: string,
+  password: string,
+  errorMessage: string
 }
 
 interface NoteModalProps {
@@ -23,6 +28,18 @@ interface NoteAppProps {
 
 interface Note {
   id: string;
-  title: string;
-  description: string;
+  note: {
+    title: string;
+    description: string;
+  };
 }
+
+interface SortingNote {
+  id: string;
+  createdAt: { seconds: number; nanoseconds: number };
+  note: {
+    title: string;
+    description: string;
+  };
+}
+
