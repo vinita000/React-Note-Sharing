@@ -10,6 +10,11 @@ interface ISTATE {
   email: string,
   password: string,
   errorMessage: string
+  isShared: boolean,
+  updatedId: string,
+  updatedText: string,
+  updatedDescription: string,
+  sharedId: string
 }
 
 interface NoteModalProps {
@@ -18,7 +23,8 @@ interface NoteModalProps {
   isCreate: boolean
   updateTitle: string,
   updateDescription: string,
-  updateId: string
+  updateId: string,
+  noteId: string
 }
 
 interface NoteAppProps {
@@ -42,4 +48,5 @@ interface SortingNote {
     description: string;
   };
 }
+
 

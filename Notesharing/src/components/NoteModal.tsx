@@ -33,6 +33,8 @@ const defaultValues: ISTATE = {
 const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onRequestClose, isCreate, updateTitle, updateDescription, updateId  }) => {
   console.log("isOpen", isOpen)
   console.log("onRequestClose", onRequestClose)
+  console.log("updateTitle", updateTitle)
+  console.log("updateId", updateId)
   const [state, setState] = useState(defaultValues);
   const { title, description } = state;
 
@@ -76,6 +78,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onRequestClose, isCreate,
   
 
   const upDateNote = async (id: string, title: string, description: string) => {
+    console.log("id..........", id);
     console.log("title..........", title);
     console.log("descr..........", description);
     const noteRef = doc(db, 'notes', id);
@@ -87,6 +90,8 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onRequestClose, isCreate,
       }
     };
 
+
+    console.log("updatedNote.....", id)
     try {
       await setDoc(noteRef, updatedNote, { merge: true });
       console.log('Document updated successfully.');

@@ -7,6 +7,8 @@ import { remove } from 'firebase/database';
 import NoteModal from './NoteModal';
 import { db } from '../utils/firestore';
 import { deleteDoc, doc, getDoc } from 'firebase/firestore';
+import ShareModal from './shareModal';
+
 
 const defaultValues: ISTATE = {
   isModalOpen: false,
@@ -14,7 +16,12 @@ const defaultValues: ISTATE = {
   title: "",
   description: '',
   error: '',
-  loading: true
+  loading: true,
+  isShared: false,
+  updatedId: "",
+  updatedText: "",
+  updatedDescription: "",
+  sharedId: ""
 };
 
 const defaultType: SortingNote = {
@@ -70,12 +77,20 @@ const Notes: React.FC<NoteAppProps> = ({ noteList, loading }) => {
     }));
   }
 
-  const handleUpdateModal = () => {
+  const handleUpdateModal = async (noteId: string) => {
+    console.log("noteId", noteId)
+    const noteRef = doc(db, 'notes', noteId);
+    const noteSnapshot = await getDoc(noteRef);
+    const noteData = noteSnapshot.data();
     setState((prevSate) => ({
       ...prevSate,
-      isModalOpen: true
+      isModalOpen: true,
+      updatedId: noteId,
+      updatedText: noteData?.note?.title,
+      updatedDescription: noteData?.note?.description
     }));
   }
+
 
   const deleteNote = async (id: string) => {
     try {
@@ -85,8 +100,20 @@ const Notes: React.FC<NoteAppProps> = ({ noteList, loading }) => {
     }
   };
 
-  const handleShareModal = () => {
+  const handleShareModal = async (noteId: string) => {
+    console.log("shareid", noteId)
+    setState((prevSate) => ({
+      ...prevSate,
+      isShared: true,
+      sharedId: noteId
+    }));
+  }
 
+  const handleShareCloseModal = () => {
+    setState((prevSate) => ({
+      ...prevSate,
+      isShared: false
+    }));
   }
   
   // console.log("result...........1", noteList)
@@ -105,7 +132,7 @@ const Notes: React.FC<NoteAppProps> = ({ noteList, loading }) => {
           width: '50%'
         };
 
-        console.log("isOpen")
+        // console.log("note.......", state.updatedId)
         return (
           <div style={divstyle} key={note.id}>
             <Paper sx={noteStyle}>
@@ -116,17 +143,18 @@ const Notes: React.FC<NoteAppProps> = ({ noteList, loading }) => {
                 {note.note.description}
               </Typography>
               <div style={buttonStyle}>
-                <button style={button} onClick={()=>handleUpdateModal()}>Update</button>
+                <button style={button} onClick={()=>handleUpdateModal(note.id)}>Update</button>
                 <button style={button} onClick={() => deleteNote(note.id)}>Delete</button>
-                <button style={button} onClick={()=>handleShareModal()}>Share</button>
+                <button style={button} onClick={()=>handleShareModal(note.id)}>Share</button>
                 <NoteModal 
                 isOpen={state.isModalOpen}
                 onRequestClose={handleCloseModal}
                 isCreate={false}
-                updateId = {note.id}
-                updateTitle={note.note.title}
-                updateDescription={note.note.description}
+                updateId = {state.updatedId}
+                updateTitle={state.updatedText}
+                updateDescription={state.updatedDescription}
               />
+              { state.isShared && <ShareModal  noteId= {state.sharedId} isOpen={state.isShared} onRequestClose={handleShareCloseModal}/> }
               </div>
             </Paper>
           </div>

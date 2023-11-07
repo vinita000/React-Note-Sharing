@@ -13,6 +13,9 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch } from 'react-redux';
 import { addUser } from '../utils/appSlice'
 import handleAuthStateChanges from '../utils/handleAuthStateChanges'
+import { addDoc, collection } from 'firebase/firestore';
+import { db } from '../utils/firestore';
+
 
 const paperStyle = { padding: 20, height: '70vh', width: 280, margin: "20px auto" }
 const avatarStyle = { backgroundColor: '#1bbd7e' }
@@ -67,6 +70,13 @@ const Login: React.FC = () => {
               const user = auth.currentUser;
               console.log("displayName", user?.displayName);
               const { uid, email, displayName } = auth.currentUser;
+              const data = {
+                uid: uid,
+                email: email
+              }
+              addDoc(collection(db, 'users'), {
+                user: data,
+              });
               dispatch(
                 addUser({
                   uid: uid,
