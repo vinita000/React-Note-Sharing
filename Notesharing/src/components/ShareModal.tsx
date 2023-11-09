@@ -11,7 +11,9 @@ import {
 
 import { db } from '../utils/firestore';
 import { getDocs, collection, query, where, addDoc, doc, getDoc } from 'firebase/firestore';
+import { auth } from "../utils/firebase";
 
+const errorStyle = { color: 'red' }
 const defaultValues: ISTATE = {
   isModalOpen: false,
   notes: [],
@@ -39,12 +41,26 @@ const ShareModal: React.FC<NoteModalProps> = ({ isOpen, onRequestClose, noteId }
 
   const handleShareNote = async () => {
     try {
+      const currentUser = auth.currentUser
+      console.log("currentUser....", currentUser);
+      if(currentUser?.email === state.email) {
+        console.log("You can't share notes to yourself")
+        setState((prevState) => ({
+          ...prevState,
+          error: "You can't share notes to yourself"
+        }));
+        return
+      }
       const usersCollection = collection(db, 'users');
       const q = query(usersCollection, where('user.email', '==', state.email));
       const querySnapshot = await getDocs(q);
       
       if (querySnapshot.empty) {
         console.log('User does not exist');
+        setState((prevState) => ({
+          ...prevState,
+          error: "User does not exist"
+        }));
       } else {
         const noteRef = doc(db, 'notes', noteId);
         const noteSnapshot = await getDoc(noteRef);
@@ -108,6 +124,7 @@ const ShareModal: React.FC<NoteModalProps> = ({ isOpen, onRequestClose, noteId }
           style={{ width: '100%'}}
           sx={{ paddingBottom: 2, margin: '5px 0'}}
         />
+        <Typography style={errorStyle}>{state.error}</Typography>
         <Button
           variant="contained"
           sx={{ mt: 2 }}
