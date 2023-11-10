@@ -24,7 +24,8 @@ const defaultValues: ISTATE = {
   name: '',
   email: '',
   password: '',
-  errorMessage: ''
+  errorMessage: '',
+  sharedBy: ''
 };
 
 const ShareModal: React.FC<NoteModalProps> = ({ isOpen, onRequestClose, noteId }) => {
@@ -62,22 +63,39 @@ const ShareModal: React.FC<NoteModalProps> = ({ isOpen, onRequestClose, noteId }
           error: "User does not exist"
         }));
       } else {
+        let email: string;
         const noteRef = doc(db, 'notes', noteId);
         const noteSnapshot = await getDoc(noteRef);
         const noteData = noteSnapshot.data();
-        console.log("noteData", noteData?.note)
-        const sharedNoteData = {
-          note: {
-            id: noteId,
-            text: noteData?.note?.title,
-            description: noteData?.note?.description
-          },
-          recipientUserId: state.email,
-        };
-        console.log("sharedNoteData", sharedNoteData)
-        await addDoc(collection(db, 'SharedNote'), sharedNoteData);
-        onRequestClose();
-        console.log('Note shared successfully.');
+        console.log("noteData", noteData?.userId)
+        const id = noteData?.userId
+        const q = query(usersCollection, where('user.uid', '==', id));
+        const querySnapshot = await getDocs(q);
+
+        const docWithData = querySnapshot.docs.find((doc) => {
+          return doc.data().user.uid === id;
+        });
+        if (docWithData) {
+          email = docWithData.data()?.user?.email
+          console.log("email", email)
+        
+        
+          const sharedNoteData = {
+            note: {
+              id: noteId,
+              title: noteData?.note?.title,
+              description: noteData?.note?.description
+            },
+            recipientUserId: state.email,
+            sharedBy: email
+
+          };
+          
+          console.log("sharedNoteData", sharedNoteData)
+          await addDoc(collection(db, 'SharedNote'), sharedNoteData);
+          onRequestClose();
+          console.log('Note shared successfully.');
+        }
       }
     } catch (error) {
       console.error('Error checking email:', error);
@@ -87,7 +105,7 @@ const ShareModal: React.FC<NoteModalProps> = ({ isOpen, onRequestClose, noteId }
   
 
 
-  console.log("isOpen.....", isOpen)
+  console.log("isShared.....", state.isShared)
   return (
     <Modal open={isOpen} onClose={onRequestClose}>
       <Box

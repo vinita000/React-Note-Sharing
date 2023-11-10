@@ -58,7 +58,7 @@ const button = {
   marginRight: '10px'
 }
 
-const Notes: React.FC<NoteAppProps> = ({ noteList, loading }) => {
+const Notes: React.FC<NoteAppProps> = ({ noteList, loading, fetchUpdatedList }) => {
   const [state, setState] = useState(defaultValues);
   console.log("notes1........", loading);
   
@@ -78,21 +78,51 @@ const Notes: React.FC<NoteAppProps> = ({ noteList, loading }) => {
   }
 
   const handleUpdateModal = async (noteId: string) => {
-    console.log("noteId", noteId)
+    console.log("noteId", noteId);
     const noteRef = doc(db, 'notes', noteId);
-    const noteSnapshot = await getDoc(noteRef);
+    const sharedNoteRef = doc(db, 'SharedNote', noteId);
+    console.log("sharedNoteRef", sharedNoteRef);
+  
+    const [noteSnapshot, sharedNoteSnapshot] = await Promise.all([
+      getDoc(noteRef),
+      getDoc(sharedNoteRef),
+    ]);
+  
     const noteData = noteSnapshot.data();
-    setState((prevSate) => ({
-      ...prevSate,
+    const sharedNoteData = sharedNoteSnapshot.data();
+
+
+    console.log("noteData", noteData?.note?.title)
+    console.log("NoteDatadescription", noteData?.note?.description)
+    console.log("SharednoteData", sharedNoteData?.note?.title)
+    console.log("SharedNoteDatadescription", sharedNoteData?.note?.description)
+
+    // let updatedText:string;
+    // let updatedDescription:string;
+
+    // if (sharedNoteData) {
+    //   updatedText = sharedNoteData.note?.title;
+    //   updatedDescription = sharedNoteData.note?.description;
+    // } else {
+      const updatedText = noteData?.note?.title;
+      const updatedDescription = noteData?.note?.description;
+    // }
+
+
+    setState((prevState) => ({
+      ...prevState,
       isModalOpen: true,
       updatedId: noteId,
-      updatedText: noteData?.note?.title,
-      updatedDescription: noteData?.note?.description
+      updatedText,
+      updatedDescription,
     }));
+
   }
+  
 
 
   const deleteNote = async (id: string) => {
+    // alert(id)
     try {
       await deleteDoc(doc(db, "notes", id));
     } catch (error) {
@@ -116,7 +146,7 @@ const Notes: React.FC<NoteAppProps> = ({ noteList, loading }) => {
     }));
   }
   
-  // console.log("result...........1", noteList)
+  console.log("result...........1", noteList)
   // console.log("result............2", noteList.sort())
   return (
     <div>
@@ -132,7 +162,7 @@ const Notes: React.FC<NoteAppProps> = ({ noteList, loading }) => {
           width: '50%'
         };
 
-        // console.log("note.......", state.updatedId)
+        console.log("note.......", note.id)
         return (
           <div style={divstyle} key={note.id}>
             <Paper sx={noteStyle}>
@@ -142,10 +172,13 @@ const Notes: React.FC<NoteAppProps> = ({ noteList, loading }) => {
               <Typography variant="body1">
                 {note.note.description}
               </Typography>
+              <Typography variant="body1">
+                {note.sharedBy && `Shared By: ${note.sharedBy}`}
+              </Typography>
               <div style={buttonStyle}>
-                <button style={button} onClick={()=>handleUpdateModal(note.id)}>Update</button>
-                <button style={button} onClick={() => deleteNote(note.id)}>Delete</button>
-                <button style={button} onClick={()=>handleShareModal(note.id)}>Share</button>
+              { !note.sharedBy && <button style={button} onClick={()=>handleUpdateModal(note.id)}>Update</button> }
+              { !note.sharedBy && <button style={button} onClick={() => deleteNote(note.id)}>Delete</button> }
+              { !note.sharedBy && <button style={button} onClick={()=>handleShareModal(note.id)}>Share</button> }
                 <NoteModal 
                 isOpen={state.isModalOpen}
                 onRequestClose={handleCloseModal}

@@ -29,6 +29,7 @@ const defaultValues: ISTATE = {
   password: '',
   errorMessage: ''
 };
+import { auth } from "../utils/firebase";
 
 const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onRequestClose, isCreate, updateTitle, updateDescription, updateId  }) => {
   console.log("isOpen", isOpen)
@@ -48,7 +49,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onRequestClose, isCreate,
     }));
   }, [updateTitle, updateDescription]);
 
-  const addNote = async (e: React.FormEvent) => {
+  const addNote = async () => {
     // e.preventDefault();
     const newNote = {
       title: title,
@@ -58,6 +59,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onRequestClose, isCreate,
     try {
       await addDoc(collection(db, 'notes'), {
         note: newNote,
+        userId: auth?.currentUser?.uid,
         createdAt: serverTimestamp(),
       });
   

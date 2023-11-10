@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Grid, Button } from '@material-ui/core';
 import NoteModal from '../components/NoteModal';
 import Notes from '../components/Notes';
-import { collection, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { RootState } from '../utils/appStore';
@@ -16,13 +16,13 @@ const buttonStyle = {
   width: '15%',
 };
 
-const defaultNoteState: ISTATE = {
+const defaultNoteState: ISTATE =  {
   isModalOpen: false,
   notes: [],
   loading: true,
 };
 
-const NoteApp: React.FC = () => {
+const NoteApp = () => {
   const [state, setState] = useState(defaultNoteState);
   const { isModalOpen, notes, loading } = state;
   const dispatch = useDispatch();
@@ -31,43 +31,52 @@ const NoteApp: React.FC = () => {
   const user = useSelector((store: RootState) => store.user);
   const { login } = location?.state || false;
 
-  console.log("login test", login)
+  const fetchData = async () => {
+    try {
+      const currentUser = auth?.currentUser;
+      if (currentUser) {
+        const notesCollection = collection(db, 'notes');
+        const shareNoteCollection = collection(db, 'SharedNote');
+
+        const filteredQuery = query(notesCollection, where('userId', '==', currentUser?.uid));
+        const sharedFilteredQuery = query(shareNoteCollection, where('recipientUserId', '==', currentUser?.email));
+
+        const [notesSnapshot, sharedNotesSnapshot] = await Promise.all([
+          getDocs(filteredQuery),
+          getDocs(sharedFilteredQuery),
+        ]);
+
+        const notesArray = notesSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        const sharedNotesArray = sharedNotesSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        const combinedArray = [...notesArray, ...sharedNotesArray];
+
+        setState((prevState) => ({
+          ...prevState,
+          notes: combinedArray,
+          loading: false,
+        }));
+
+      }
+    } catch (error) {
+      console.error("Error fetching notes: ", error);
+    }
+  };
 
   useEffect(() => {
-    const unsubscribe = handleAuthStateChanges(navigate, dispatch, location);
-  
-    const fetchData = async () => {
-      try {
-        const notesCollection = collection(db, 'notes');
-        const unsubscribeSnapshot = onSnapshot(notesCollection, (querySnapshot) => {
-          const notesArray = querySnapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-          console.log("notesArray.........", notesArray);
-          setState((prevState) => ({
-            ...prevState,
-            notes: notesArray,
-            loading: false,
-          }));
-        });
-  
-        return () => {
-          unsubscribeSnapshot();
-        };
-      } catch (error) {
-        console.error("Error fetching notes: ", error);
-      }
-    };
-  
+    const unsubscribeAuth = handleAuthStateChanges(navigate, dispatch, location);
     fetchData();
-  
     return () => {
-      unsubscribe();
+      unsubscribeAuth();
     };
-  }, []);
-  
-  
+  }, [state]);
 
   const handleModal = () => {
     setState((prevState) => ({
@@ -94,8 +103,7 @@ const NoteApp: React.FC = () => {
     dispatch(removeUser());
   };
 
-
-  console.log("notes........123", notes)
+  console.log("nnnnotes", notes)
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
@@ -121,7 +129,7 @@ const NoteApp: React.FC = () => {
           Create Note
         </Button>
         <NoteModal isOpen={isModalOpen} onRequestClose={handleCloseModal} isCreate={true} />
-        <Notes noteList={notes} loading={loading} />
+        <Notes noteList={notes} loading={loading} fetchUpdatedList={fetchData} />
       </Grid>
     </div>
   );

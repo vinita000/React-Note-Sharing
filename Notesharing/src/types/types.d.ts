@@ -15,6 +15,7 @@ interface ISTATE {
   updatedText: string,
   updatedDescription: string,
   sharedId: string
+  sharedBy: string
 }
 
 interface NoteModalProps {
@@ -30,10 +31,12 @@ interface NoteModalProps {
 interface NoteAppProps {
   noteList: Array,
   loading: boolean;
+  fetchUpdatedList: Array
 }
 
 interface Note {
   id: string;
+  sharedBy?: string; 
   note: {
     title: string;
     description: string;
@@ -42,6 +45,7 @@ interface Note {
 
 interface SortingNote {
   id: string;
+  sharedBy?: string; 
   createdAt: { seconds: number; nanoseconds: number };
   note: {
     title: string;
