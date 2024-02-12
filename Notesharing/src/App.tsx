@@ -14,23 +14,24 @@
 
 // export default App
 
-import { BrowserRouter, Route, Routes } from "react-router-dom";
-import Login from "./routes/Login";
-import { Provider } from 'react-redux';
-import appStore from './utils/appStore'
-import NoteApp from "./routes/NoteApp";
+// import { BrowserRouter, Route, Routes } from "react-router-dom";
+// // import Login from "./routes/Login";
+// import { Provider } from 'react-redux';
+// import appStore from './utils/appStore'
+// // import NoteApp from "./routes/NoteApp";
 
 
 function App() {
   return (
-    <Provider store={appStore}>
-      <BrowserRouter>
-        <Routes>
-          <Route path='/' element={<Login />}/>
-          <Route path='/user/:uid/NoteApp/' element={<NoteApp />} />
-        </Routes>
-      </BrowserRouter>
-    </Provider>
+    // <Provider store={appStore}>
+    //   <BrowserRouter>
+    //     <Routes>
+    //       {/* <Route path='/' element={<Login />}/> */}
+    //       {/* <Route path='/user/:uid/NoteApp/' element={<NoteApp />} /> */}
+    //     </Routes>
+    //   </BrowserRouter>
+    // </Provider>
+    <h1>Hello world</h1>
   )
 }
 
